@@ -35,6 +35,7 @@ from . import epdconfig
 import PIL
 from PIL import Image
 import io
+import time
 
 # Display resolution
 EPD_WIDTH       = 600
@@ -89,13 +90,13 @@ class EPD:
     def ReadBusyHigh(self):
         logger.debug("e-Paper busy")
         while(epdconfig.digital_read(self.busy_pin) == 0):      # 0: idle, 1: busy
-            epdconfig.delay_ms(100)
+            epdconfig.delay_ms(10)
         logger.debug("e-Paper busy release")
 
     def ReadBusyLow(self):
         logger.debug("e-Paper busy")
         while(epdconfig.digital_read(self.busy_pin) == 1):      # 0: idle, 1: busy
-            epdconfig.delay_ms(100)
+            epdconfig.delay_ms(10)
         logger.debug("e-Paper busy release")
 
     def init(self):
@@ -170,6 +171,8 @@ class EPD:
         return buf
 
     def display(self,image,lock):
+        sleep_time = 0.1
+        time.sleep(sleep_time)
         lock.acquire()
         self.send_command(0x61) #Set Resolution setting
         self.send_data(0x02)
@@ -178,8 +181,9 @@ class EPD:
         self.send_data(0xC0)
         self.send_command(0x10)
         lock.release()
-
+        time.sleep(sleep_time)
         lock.acquire()
+
         self.send_data_bulk(image)
         self.send_command(0x04) #0x04
         lock.release()
@@ -192,7 +196,31 @@ class EPD:
         self.send_command(0x02) #0x02
         lock.release()
         self.ReadBusyLow()
-        epdconfig.delay_ms(500)
+        # epdconfig.delay_ms(500)
+
+    def one(self):
+        self.send_command(0x61) #Set Resolution setting
+        self.send_data(0x02)
+        self.send_data(0x58)
+        self.send_data(0x01)
+        self.send_data(0xC0)
+        self.send_command(0x10)
+
+    def two(self, image):
+        self.send_data_bulk(image)
+
+    def three(self):
+        self.send_command(0x04) #0x04
+        self.ReadBusyHigh()
+
+    def four(self):
+        self.send_command(0x12) #0x12
+        self.ReadBusyHigh()
+
+    def five(self):
+        self.send_command(0x02) #0x02
+        self.ReadBusyLow()
+
 
     def Clear(self):
         self.send_command(0x61) #Set Resolution setting
