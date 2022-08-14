@@ -169,20 +169,28 @@ class EPD:
 
         return buf
 
-    def display(self,image):
+    def display(self,image,lock):
+        lock.acquire()
         self.send_command(0x61) #Set Resolution setting
         self.send_data(0x02)
         self.send_data(0x58)
         self.send_data(0x01)
         self.send_data(0xC0)
         self.send_command(0x10)
+        lock.release()
 
+        lock.acquire()
         self.send_data_bulk(image)
         self.send_command(0x04) #0x04
+        lock.release()
         self.ReadBusyHigh()
+        lock.acquire()
         self.send_command(0x12) #0x12
+        lock.release()
         self.ReadBusyHigh()
+        lock.acquire()
         self.send_command(0x02) #0x02
+        lock.release()
         self.ReadBusyLow()
         epdconfig.delay_ms(500)
 
